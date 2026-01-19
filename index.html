@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的自我介紹</title>
+    <style>
+        /* 基礎樣式設定 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        /* 導覽列 */
+        header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 1rem 0;
+            text-align: center;
+            position: sticky;
+            top: 0;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        /* 個人簡介區塊 */
+        .profile-card {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .profile-card img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #ecf0f1;
+        }
+
+        /* 技能標籤 */
+        .skills {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .skill-tag {
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* 內容區塊 */
+        section {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>歡迎來到我的個人網站</h1>
+    </header>
+
+    <div class="container">
+        <div class="profile-card">
+            <img src="https://via.placeholder.com/150" alt="個人頭像">
+            <h1>你的名字</h1>
+            <p><strong>現任職位 / 學生</strong></p>
+            <p>這是一段簡單的自我介紹。熱愛技術分享，喜歡探索新事物，並致力於解決複雜的問題。</p>
+            
+            <ul class="skills">
+                <li class="skill-tag">HTML/CSS</li>
+                <li class="skill-tag">JavaScript</li>
+                <li class="skill-tag">UI 設計</li>
+                <li class="skill-tag">Python</li>
+            </ul>
+        </div>
+
+        <section id="experience">
+            <h2>工作與教育經歷</h2>
+            <ul>
+                <li><strong>2022 - 現在：</strong> 某某科技公司 - 前端工程師</li>
+                <li><strong>2018 - 2022：</strong> 某某大學 - 資訊工程系畢業</li>
+            </ul>
+        </section>
+
+        <section id="contact">
+            <h2>聯絡我</h2>
+            <p>📧 Email: example@email.com</p>
+            <p>🔗 LinkedIn: <a href="#">linkedin.com/in/yourname</a></p>
+            <p>💻 GitHub: <a href="#">github.com/yourname</a></p>
+        </section>
+    </div>
+
+    <footer>
+        <p>© 2026 你的名字. 版權所有.</p>
+    </footer>
+
+</body>
+</html>
