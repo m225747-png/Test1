@@ -1,194 +1,89 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的戀愛養成遊戲</title>
+    <title>簡易下樓梯遊戲</title>
     <style>
-        /* CSS 樣式：定義遊戲外觀 */
-        body {
-            background-color: #2c3e50;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
-        }
-
-        #game-container {
-            width: 800px;
-            height: 600px;
-            position: relative;
-            background: https://picsum.photos/800/600 
- /* 預設粉色背景 */
-            overflow: hidden;
-            border: 8px solid #fff;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        /* 角色立繪區域 */
-        #character {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            height: 450px;
-            transition: all 0.5s;
-        }
-
-        /* 對話框 */
-        #dialogue-box {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            min-height: 120px;
-            background: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            border: 2px solid #ffb6c1;
-            box-sizing: border-box;
-            cursor: pointer;
-        }
-
-        #name {
-            font-weight: bold;
-            color: #ffb6c1;
-            font-size: 1.4em;
-            margin-bottom: 8px;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        #text {
-            font-size: 1.1em;
-            line-height: 1.6;
-            margin: 0;
-        }
-
-        /* 選項按鈕 */
-        #options-container {
-            margin-top: 15px;
-            display: none; /* 初始隱藏 */
-        }
-
-        .option-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 5px;
-            color: #333;
-            font-weight: bold;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .option-btn:hover {
-            background: #ffb6c1;
-            color: white;
-        }
+        canvas { border: 2px solid #000; background: #f0f0f0; display: block; margin: 0 auto; }
+        body { text-align: center; font-family: Arial; }
     </style>
 </head>
 <body>
+    <h1>下樓梯 Demo</h1>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <p>使用 左右方向鍵 控制</p>
 
-<div id="game-container">
-    <div id="character">
-        </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-    <div id="dialogue-box" onclick="handleDialogueClick()">
-        <div id="name">？？？</div>
-        <p id="text">（點擊對話框開始故事...）</p>
-        <div id="options-container" id="options"></div>
-    </div>
-</div>
+        // 遊戲參數
+        let player = { x: 200, y: 100, width: 20, height: 20, speed: 5, dy: 0 };
+        let platforms = [];
+        let gravity = 0.5;
+        let gameSpeed = 2;
+        let keys = {};
 
-<script>
-    /* JavaScript 邏輯：控制劇本與切換 */
-    
-    // 劇本資料庫
-    const story = {
-        start: {
-            name: "AMY",
-            text: "那個... 請問你知道圖書館怎麼走嗎？我第一次來這間學校...",
-            options: [
-                { text: "親切地帶她去", next: "kind" },
-                { text: "冷淡地指路", next: "cold" }
-            ]
-        },
-        kind: {
-            name: "AMY",
-            text: "真的太謝謝你了！你真是一個溫柔的人。我叫小雅，你呢？",
-            options: [
-                { text: "告訴她名字（達成相遇結局）", next: "ending_good" }
-            ]
-        },
-        cold: {
-            name: "女孩",
-            text: "喔... 好吧，謝謝你。那我再問問別人好了。（她看起來有點失落）",
-            options: [
-                { text: "看著她走掉（達成邊緣人結局）", next: "ending_bad" }
-            ]
-        },
-        ending_good: {
-            name: "系統",
-            text: "恭喜！你獲得了對方的聯繫方式。遊戲結束。",
-            options: [{ text: "重新開始", next: "start" }]
-        },
-        ending_bad: {
-            name: "系統",
-            text: "你繼續過著平淡的校園生活。遊戲結束。",
-            options: [{ text: "重新開始", next: "start" }]
+        // 初始化階梯
+        for(let i=0; i<5; i++) {
+            platforms.push({ x: Math.random()*300, y: i*100 + 200, w: 80, h: 10 });
         }
-    };
 
-    let currentSceneKey = 'start';
-    let isShowingOptions = false;
+        function draw() {
+            // 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 更新畫面函數
-    function renderScene(sceneKey) {
-        const scene = story[sceneKey];
-        const nameEl = document.getElementById('name');
-        const textEl = document.getElementById('text');
-        const optionsContainer = document.getElementById('options-container');
+            // 畫玩家
+            ctx.fillStyle = "red";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
 
-        // 更新文字
-        nameEl.innerText = scene.name;
-        textEl.innerText = scene.text;
-        
-        // 清空並生成選項
-        optionsContainer.innerHTML = '';
-        if (scene.options) {
-            isShowingOptions = true;
-            optionsContainer.style.display = 'block';
-            scene.options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.innerText = opt.text;
-                btn.className = 'option-btn';
-                btn.onclick = (e) => {
-                    e.stopPropagation(); // 防止觸發對話框點擊事件
-                    currentSceneKey = opt.next;
-                    isShowingOptions = false;
-                    optionsContainer.style.display = 'none';
-                    renderScene(currentSceneKey);
-                };
-                optionsContainer.appendChild(btn);
+            // 畫階梯
+            ctx.fillStyle = "black";
+            platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+
+            update();
+            requestAnimationFrame(draw);
+        }
+
+        function update() {
+            // 玩家左右移動
+            if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+            if (keys["ArrowRight"] && player.x < canvas.width - player.width) player.x += player.speed;
+
+            // 重力加速
+            player.dy += gravity;
+            player.y += player.dy;
+
+            // 階梯上升邏輯
+            let onPlatform = false;
+            platforms.forEach(p => {
+                p.y -= gameSpeed; // 階梯往上移
+
+                // 碰撞偵測 (站在階梯上)
+                if (player.x < p.x + p.w && player.x + player.width > p.x &&
+                    player.y + player.height > p.y && player.y + player.height < p.y + p.h + player.dy) {
+                    player.y = p.y - player.height;
+                    player.dy = 0;
+                    onPlatform = true;
+                }
             });
-        }
-    }
 
-    // 處理對話框點擊
-    function handleDialogueClick() {
-        if (!isShowingOptions) {
-            renderScene(currentSceneKey);
-        }
-    }
-</script>
+            // 如果階梯移出螢幕，從底部重新生成
+            if (platforms[0].y < 0) {
+                platforms.shift();
+                platforms.push({ x: Math.random()*320, y: 500, w: 80, h: 10 });
+            }
 
+            // 遊戲結束判定
+            if (player.y < 0 || player.y > canvas.height) {
+                alert("遊戲結束！");
+                player.y = 100; player.dy = 0; // 重置
+            }
+        }
+
+        window.addEventListener("keydown", e => keys[e.code] = true);
+        window.addEventListener("keyup", e => keys[e.code] = false);
+
+        draw();
+    </script>
 </body>
 </html>
