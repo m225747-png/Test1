@@ -2,21 +2,192 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的戀愛養成遊戲</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS 樣式：定義遊戲外觀 */
+        body {
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            background: #ffe4e1; /* 預設粉色背景 */
+            overflow: hidden;
+            border: 8px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* 角色立繪區域 */
+        #character {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 450px;
+            transition: all 0.5s;
+        }
+
+        /* 對話框 */
+        #dialogue-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            min-height: 120px;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #ffb6c1;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        #name {
+            font-weight: bold;
+            color: #ffb6c1;
+            font-size: 1.4em;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        #text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* 選項按鈕 */
+        #options-container {
+            margin-top: 15px;
+            display: none; /* 初始隱藏 */
+        }
+
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            color: #333;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .option-btn:hover {
+            background: #ffb6c1;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="background"></div>
-        
-        <div id="character"></div>
 
-        <div id="dialogue-box">
-            <div id="name">名稱</div>
-            <p id="text">點擊畫面開始遊戲...</p>
-            <div id="options-container"></div>
+<div id="game-container">
+    <div id="character">
         </div>
+
+    <div id="dialogue-box" onclick="handleDialogueClick()">
+        <div id="name">？？？</div>
+        <p id="text">（點擊對話框開始故事...）</p>
+        <div id="options-container" id="options"></div>
     </div>
-    <script src="script.js"></script>
+</div>
+
+<script>
+    /* JavaScript 邏輯：控制劇本與切換 */
+    
+    // 劇本資料庫
+    const story = {
+        start: {
+            name: "女孩",
+            text: "那個... 請問你知道圖書館怎麼走嗎？我第一次來這間學校...",
+            options: [
+                { text: "親切地帶她去", next: "kind" },
+                { text: "冷淡地指路", next: "cold" }
+            ]
+        },
+        kind: {
+            name: "女孩",
+            text: "真的太謝謝你了！你真是一個溫柔的人。我叫小雅，你呢？",
+            options: [
+                { text: "告訴她名字（達成相遇結局）", next: "ending_good" }
+            ]
+        },
+        cold: {
+            name: "女孩",
+            text: "喔... 好吧，謝謝你。那我再問問別人好了。（她看起來有點失落）",
+            options: [
+                { text: "看著她走掉（達成邊緣人結局）", next: "ending_bad" }
+            ]
+        },
+        ending_good: {
+            name: "系統",
+            text: "恭喜！你獲得了對方的聯繫方式。遊戲結束。",
+            options: [{ text: "重新開始", next: "start" }]
+        },
+        ending_bad: {
+            name: "系統",
+            text: "你繼續過著平淡的校園生活。遊戲結束。",
+            options: [{ text: "重新開始", next: "start" }]
+        }
+    };
+
+    let currentSceneKey = 'start';
+    let isShowingOptions = false;
+
+    // 更新畫面函數
+    function renderScene(sceneKey) {
+        const scene = story[sceneKey];
+        const nameEl = document.getElementById('name');
+        const textEl = document.getElementById('text');
+        const optionsContainer = document.getElementById('options-container');
+
+        // 更新文字
+        nameEl.innerText = scene.name;
+        textEl.innerText = scene.text;
+        
+        // 清空並生成選項
+        optionsContainer.innerHTML = '';
+        if (scene.options) {
+            isShowingOptions = true;
+            optionsContainer.style.display = 'block';
+            scene.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.innerText = opt.text;
+                btn.className = 'option-btn';
+                btn.onclick = (e) => {
+                    e.stopPropagation(); // 防止觸發對話框點擊事件
+                    currentSceneKey = opt.next;
+                    isShowingOptions = false;
+                    optionsContainer.style.display = 'none';
+                    renderScene(currentSceneKey);
+                };
+                optionsContainer.appendChild(btn);
+            });
+        }
+    }
+
+    // 處理對話框點擊
+    function handleDialogueClick() {
+        if (!isShowingOptions) {
+            renderScene(currentSceneKey);
+        }
+    }
+</script>
+
 </body>
 </html>
