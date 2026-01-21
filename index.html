@@ -1,136 +1,226 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的自我介紹</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>經典坦克大戰 - 復刻版</title>
     <style>
-        /* 基礎樣式設定 */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f7f6;
-            color: #333;
-        }
-
-        /* 導覽列 */
-        header {
-            background: #2c3e50;
-            color: #fff;
-            padding: 1rem 0;
-            text-align: center;
-            position: sticky;
-            top: 0;
-        }
-
-        /* 主容器 */
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 20px;
-        }
-
-        /* 個人簡介區塊 */
-        .profile-card {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .profile-card img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid #ecf0f1;
-        }
-
-        /* 技能標籤 */
-        .skills {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            list-style: none;
-            padding: 0;
-        }
-
-        .skill-tag {
-            background: #3498db;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        /* 內容區塊 */
-        section {
-            background: #fff;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        h2 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 5px;
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #7f8c8d;
-            font-size: 0.8rem;
-        }
+        body { margin: 0; overflow: hidden; background: #333; font-family: 'Courier New', monospace; touch-action: none; }
+        canvas { display: block; background: #000; margin: 20px auto; border: 4px solid #555; }
+        
+        .ui-layer { position: fixed; top: 10px; left: 10px; color: #fff; z-index: 10; pointer-events: none; }
+        
+        .controls { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; z-index: 20; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 60px); gap: 5px; }
+        .btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; user-select: none; }
+        #btnFire { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,0,0,0.5); font-size: 20px; border-color: #f00; align-self: center; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>歡迎來到我的個人網站</h1>
-    </header>
+<div class="ui-layer">
+    <div>SCORE: <span id="score">0</span></div>
+    <div>ENEMY: <span id="enemy-count">0</span></div>
+</div>
 
-    <div class="container">
-        <div class="profile-card">
-            <img src="https://via.placeholder.com/150" alt="個人頭像">
-            <h1>冠廷</h1>
-            <p><strong>現任職位 教官</strong></p>
-            <p>這是一段簡單的自我介紹。熱愛模型製作分享，喜歡探索新事物，並致力於解決複雜的問題。</p>
-            
-            <ul class="skills">
-                <li class="skill-tag">HTML/CSS</li>
-                <li class="skill-tag">JavaScript</li>
-                <li class="skill-tag">UI 設計</li>
-                <li class="skill-tag">Python</li>
-            </ul>
-        </div>
+<canvas id="gameCanvas"></canvas>
 
-        <section id="experience">
-            <h2>工作與教育經歷</h2>
-            <ul>
-                <li><strong>2022 - 現在：</strong> 某某科技公司 - 前端工程師</li>
-                <li><strong>2018 - 2022：</strong> 某某大學 - 資訊工程系畢業</li>
-            </ul>
-        </section>
-
-        <section id="contact">
-            <h2>聯絡我</h2>
-            <p>📧 Email: example@email.com</p>
-            <p>🔗 LinkedIn: <a href="#">linkedin.com/in/yourname</a></p>
-            <p>💻 GitHub: <a href="#">github.com/yourname</a></p>
-        </section>
+<div class="controls">
+    <div class="d-pad">
+        <div style="grid-column: 2;" class="btn" id="btnUp">↑</div>
+        <div style="grid-column: 1; grid-row: 2;" class="btn" id="btnLeft">←</div>
+        <div style="grid-column: 2; grid-row: 2;" class="btn" id="btnDown">↓</div>
+        <div style="grid-column: 3; grid-row: 2;" class="btn" id="btnRight">→</div>
     </div>
+    <div class="btn" id="btnFire">FIRE</div>
+</div>
 
-    <footer>
-        <p>© 2026 你的名字. 版權所有.</p>
-    </footer>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
+const SIZE = 40; // 每個格子的尺寸
+const ROWS = 13;
+const COLS = 13;
+canvas.width = COLS * SIZE;
+canvas.height = ROWS * SIZE;
+
+// 0: 空地, 1: 磚牆, 2: 鋼鐵
+let map = [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,0,1,0,1,2,1,0,1,0,1,0],
+    [0,1,0,1,0,1,0,1,0,1,0,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,1,0,2,2,0,0,0,2,2,0,1,1],
+    [0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [2,0,1,1,1,0,1,0,1,1,1,0,2],
+    [0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [1,1,0,2,2,0,0,0,2,2,0,1,1],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,1,0,1,0,1,1,1,0,1,0,1,0],
+    [0,1,0,1,0,0,0,0,0,1,0,1,0],
+    [0,0,0,0,0,1,0,1,0,0,0,0,0]
+];
+
+let player = { x: 4 * SIZE, y: 12 * SIZE, dir: 'up', speed: 2, bullets: [] };
+let enemies = [];
+let score = 0;
+let keys = {};
+
+// 初始化敵人
+function spawnEnemy() {
+    if (enemies.length < 3) {
+        enemies.push({ 
+            x: Math.floor(Math.random() * COLS) * SIZE, 
+            y: 0, 
+            dir: 'down', 
+            speed: 1.5, 
+            bullets: [],
+            moveTimer: 0 
+        });
+    }
+}
+
+// 控制監聽
+function bind(id, key) {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+    el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+}
+bind('btnUp', 'ArrowUp'); bind('btnDown', 'ArrowDown');
+bind('btnLeft', 'ArrowLeft'); bind('btnRight', 'ArrowRight');
+document.getElementById('btnFire').addEventListener('touchstart', (e) => { e.preventDefault(); fire(player); });
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+function fire(tank) {
+    if (tank.bullets.length < 2) {
+        tank.bullets.push({ x: tank.x + 18, y: tank.y + 18, dir: tank.dir, speed: 5 });
+    }
+}
+
+function checkCollision(x, y) {
+    let col = Math.floor((x + 5) / SIZE);
+    let row = Math.floor((y + 5) / SIZE);
+    let col2 = Math.floor((x + 35) / SIZE);
+    let row2 = Math.floor((y + 35) / SIZE);
+
+    if (col < 0 || col2 >= COLS || row < 0 || row2 >= ROWS) return true;
+    if (map[row][col] > 0 || map[row][col2] > 0 || map[row2][col] > 0 || map[row2][col2] > 0) return true;
+    return false;
+}
+
+function update() {
+    // 玩家移動
+    let nextX = player.x, nextY = player.y;
+    if (keys['ArrowUp'] || keys['KeyW']) { nextY -= player.speed; player.dir = 'up'; }
+    else if (keys['ArrowDown'] || keys['KeyS']) { nextY += player.speed; player.dir = 'down'; }
+    else if (keys['ArrowLeft'] || keys['KeyA']) { nextX -= player.speed; player.dir = 'left'; }
+    else if (keys['ArrowRight'] || keys['KeyD']) { nextX += player.speed; player.dir = 'right'; }
+
+    if (!checkCollision(nextX, nextY)) {
+        player.x = nextX; player.y = nextY;
+    }
+
+    // 子彈邏輯
+    [player, ...enemies].forEach(tank => {
+        tank.bullets.forEach((b, index) => {
+            if (b.dir === 'up') b.y -= b.speed;
+            if (b.dir === 'down') b.y += b.speed;
+            if (b.dir === 'left') b.x -= b.speed;
+            if (b.dir === 'right') b.x += b.speed;
+
+            // 打中牆壁
+            let r = Math.floor(b.y / SIZE);
+            let c = Math.floor(b.x / SIZE);
+            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                if (map[r][c] === 1) { map[r][c] = 0; tank.bullets.splice(index, 1); }
+                else if (map[r][c] === 2) { tank.bullets.splice(index, 1); }
+            }
+            if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) tank.bullets.splice(index, 1);
+            
+            // 玩家子彈打中敵人
+            if (tank === player) {
+                enemies.forEach((en, ei) => {
+                    if (b.x > en.x && b.x < en.x + SIZE && b.y > en.y && b.y < en.y + SIZE) {
+                        enemies.splice(ei, 1);
+                        tank.bullets.splice(index, 1);
+                        score += 100;
+                    }
+                });
+            }
+        });
+    });
+
+    // 敵人 AI
+    enemies.forEach(en => {
+        en.moveTimer--;
+        if (en.moveTimer <= 0) {
+            const dirs = ['up', 'down', 'left', 'right'];
+            en.dir = dirs[Math.floor(Math.random() * 4)];
+            en.moveTimer = 30 + Math.random() * 60;
+        }
+        let ex = en.x, ey = en.y;
+        if (en.dir === 'up') ey -= en.speed;
+        if (en.dir === 'down') ey += en.speed;
+        if (en.dir === 'left') ex -= en.speed;
+        if (en.dir === 'right') ex += en.speed;
+
+        if (!checkCollision(ex, ey)) { en.x = ex; en.y = ey; }
+        else { en.moveTimer = 0; }
+
+        if (Math.random() < 0.02) fire(en);
+    });
+
+    if (Math.random() < 0.01) spawnEnemy();
+    document.getElementById('score').innerText = score;
+    document.getElementById('enemy-count').innerText = enemies.length;
+}
+
+function drawTank(tank, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(tank.x, tank.y, SIZE, SIZE);
+    ctx.fillStyle = "#fff";
+    // 畫砲管
+    if (tank.dir === 'up') ctx.fillRect(tank.x + 15, tank.y - 5, 10, 15);
+    if (tank.dir === 'down') ctx.fillRect(tank.x + 15, tank.y + SIZE - 10, 10, 15);
+    if (tank.dir === 'left') ctx.fillRect(tank.x - 5, tank.y + 15, 15, 10);
+    if (tank.dir === 'right') ctx.fillRect(tank.x + SIZE - 10, tank.y + 15, 15, 10);
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 畫地圖
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (map[r][c] === 1) {
+                ctx.fillStyle = "#a52a2a"; // 磚牆
+                ctx.fillRect(c * SIZE + 2, r * SIZE + 2, SIZE - 4, SIZE - 4);
+                ctx.strokeStyle = "#eee"; ctx.strokeRect(c * SIZE + 5, r * SIZE + 5, 10, 5);
+            } else if (map[r][c] === 2) {
+                ctx.fillStyle = "#aaa"; // 鋼鐵
+                ctx.fillRect(c * SIZE, r * SIZE, SIZE, SIZE);
+                ctx.strokeStyle = "#fff"; ctx.strokeRect(c * SIZE + 10, r * SIZE + 10, 20, 20);
+            }
+        }
+    }
+
+    // 畫坦克
+    drawTank(player, "#ed810e");
+    enemies.forEach(en => drawTank(en, "#00aaff"));
+
+    // 畫子彈
+    ctx.fillStyle = "#fff";
+    [player, ...enemies].forEach(tank => {
+        tank.bullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 4));
+    });
+
+    update();
+    requestAnimationFrame(draw);
+}
+
+draw();
+</script>
 </body>
 </html>
