@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典坦克大戰 - 復刻版</title>
+    <title>經典魂斗羅 - 復刻版</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #333; font-family: 'Courier New', monospace; touch-action: none; }
-        canvas { display: block; background: #000; margin: 20px auto; border: 4px solid #555; }
-        
-        .ui-layer { position: fixed; top: 10px; left: 10px; color: #fff; z-index: 10; pointer-events: none; }
-        
-        .controls { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; z-index: 20; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; touch-action: none; }
+        canvas { display: block; background: linear-gradient(#111, #224); margin: 0 auto; }
+        .ui-layer { position: fixed; top: 10px; left: 10px; color: #fff; z-index: 10; font-weight: bold; }
+        .controls { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: space-around; pointer-events: auto; }
         .d-pad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 60px); gap: 5px; }
-        .btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; user-select: none; }
-        #btnFire { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,0,0,0.5); font-size: 20px; border-color: #f00; align-self: center; }
+        .action-btns { display: flex; gap: 15px; align-items: flex-end; }
+        .btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; user-select: none; }
+        #btnFire { background: rgba(255,0,0,0.5); width: 80px; height: 80px; border-color: #f00; }
+        #btnJump { background: rgba(0,255,0,0.3); width: 70px; height: 70px; }
     </style>
 </head>
 <body>
 
 <div class="ui-layer">
-    <div>SCORE: <span id="score">0</span></div>
-    <div>ENEMY: <span id="enemy-count">0</span></div>
+    REST 3 | SCORE: <span id="score">0</span>
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -32,194 +31,167 @@
         <div style="grid-column: 2; grid-row: 2;" class="btn" id="btnDown">↓</div>
         <div style="grid-column: 3; grid-row: 2;" class="btn" id="btnRight">→</div>
     </div>
-    <div class="btn" id="btnFire">FIRE</div>
+    <div class="action-btns">
+        <div class="btn" id="btnJump">B</div>
+        <div class="btn" id="btnFire">A</div>
+    </div>
 </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = 400;
 
-const SIZE = 40; // 每個格子的尺寸
-const ROWS = 13;
-const COLS = 13;
-canvas.width = COLS * SIZE;
-canvas.height = ROWS * SIZE;
+let player = {
+    x: 50, y: 300, w: 30, h: 50, dy: 0, 
+    speed: 4, jumping: false, dir: 1, 
+    aim: 'right', hp: 3, bullets: [], inv: 0
+};
 
-// 0: 空地, 1: 磚牆, 2: 鋼鐵
-let map = [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,0,1,0,1,2,1,0,1,0,1,0],
-    [0,1,0,1,0,1,0,1,0,1,0,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,1,0,2,2,0,0,0,2,2,0,1,1],
-    [0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [2,0,1,1,1,0,1,0,1,1,1,0,2],
-    [0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [1,1,0,2,2,0,0,0,2,2,0,1,1],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,0,1,0,1,1,1,0,1,0,1,0],
-    [0,1,0,1,0,0,0,0,0,1,0,1,0],
-    [0,0,0,0,0,1,0,1,0,0,0,0,0]
+let platforms = [
+    {x: 0, y: 350, w: 2000, h: 50}, // 地面
+    {x: 300, y: 250, w: 200, h: 10},
+    {x: 600, y: 250, w: 200, h: 10},
+    {x: 450, y: 150, w: 200, h: 10}
 ];
 
-let player = { x: 4 * SIZE, y: 12 * SIZE, dir: 'up', speed: 2, bullets: [] };
 let enemies = [];
 let score = 0;
+let cameraX = 0;
 let keys = {};
 
-// 初始化敵人
-function spawnEnemy() {
-    if (enemies.length < 3) {
-        enemies.push({ 
-            x: Math.floor(Math.random() * COLS) * SIZE, 
-            y: 0, 
-            dir: 'down', 
-            speed: 1.5, 
-            bullets: [],
-            moveTimer: 0 
-        });
-    }
-}
-
-// 控制監聽
-function bind(id, key) {
+// 事件監聽
+const bind = (id, key) => {
     const el = document.getElementById(id);
     el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
     el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
-}
+};
 bind('btnUp', 'ArrowUp'); bind('btnDown', 'ArrowDown');
 bind('btnLeft', 'ArrowLeft'); bind('btnRight', 'ArrowRight');
-document.getElementById('btnFire').addEventListener('touchstart', (e) => { e.preventDefault(); fire(player); });
+bind('btnJump', 'Space'); bind('btnFire', 'KeyF');
+
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
-function fire(tank) {
-    if (tank.bullets.length < 2) {
-        tank.bullets.push({ x: tank.x + 18, y: tank.y + 18, dir: tank.dir, speed: 5 });
-    }
+function fire() {
+    let vx = 0, vy = 0;
+    if (keys['ArrowUp']) vy = -1;
+    if (keys['ArrowDown']) vy = 1;
+    if (keys['ArrowLeft']) vx = -1;
+    if (keys['ArrowRight']) vx = 1;
+    
+    if (vx === 0 && vy === 0) vx = player.dir;
+    
+    player.bullets.push({
+        x: player.x + 15, y: player.y + 20,
+        vx: vx * 8, vy: vy * 8
+    });
 }
 
-function checkCollision(x, y) {
-    let col = Math.floor((x + 5) / SIZE);
-    let row = Math.floor((y + 5) / SIZE);
-    let col2 = Math.floor((x + 35) / SIZE);
-    let row2 = Math.floor((y + 35) / SIZE);
-
-    if (col < 0 || col2 >= COLS || row < 0 || row2 >= ROWS) return true;
-    if (map[row][col] > 0 || map[row][col2] > 0 || map[row2][col] > 0 || map[row2][col2] > 0) return true;
-    return false;
-}
+let fireCooldown = 0;
 
 function update() {
     // 玩家移動
-    let nextX = player.x, nextY = player.y;
-    if (keys['ArrowUp'] || keys['KeyW']) { nextY -= player.speed; player.dir = 'up'; }
-    else if (keys['ArrowDown'] || keys['KeyS']) { nextY += player.speed; player.dir = 'down'; }
-    else if (keys['ArrowLeft'] || keys['KeyA']) { nextX -= player.speed; player.dir = 'left'; }
-    else if (keys['ArrowRight'] || keys['KeyD']) { nextX += player.speed; player.dir = 'right'; }
+    if (keys['ArrowRight']) { player.x += player.speed; player.dir = 1; }
+    if (keys['ArrowLeft'] && player.x > cameraX) { player.x -= player.speed; player.dir = -1; }
+    
+    // 跳躍邏輯
+    if (keys['Space'] && !player.jumping) {
+        player.dy = -15;
+        player.jumping = true;
+    }
+    
+    player.dy += 0.8; // 重力
+    player.y += player.dy;
+    
+    // 碰撞平台
+    let onPlatform = false;
+    platforms.forEach(p => {
+        if (player.dy > 0 && player.x + 20 > p.x && player.x < p.x + p.w && 
+            player.y + 50 > p.y && player.y + 50 < p.y + 20) {
+            player.y = p.y - 50;
+            player.dy = 0;
+            player.jumping = false;
+            onPlatform = true;
+        }
+    });
 
-    if (!checkCollision(nextX, nextY)) {
-        player.x = nextX; player.y = nextY;
+    cameraX = Math.max(cameraX, player.x - 100);
+
+    // 射擊計時器
+    if (keys['KeyF'] && fireCooldown <= 0) {
+        fire();
+        fireCooldown = 15;
+    }
+    if (fireCooldown > 0) fireCooldown--;
+
+    // 子彈移動
+    player.bullets.forEach((b, i) => {
+        b.x += b.vx; b.y += b.vy;
+        if (Math.abs(b.x - player.x) > 600) player.bullets.splice(i, 1);
+    });
+
+    // 敵人邏輯
+    if (Math.random() < 0.02) {
+        enemies.push({x: cameraX + canvas.width, y: 300, speed: -3});
     }
 
-    // 子彈邏輯
-    [player, ...enemies].forEach(tank => {
-        tank.bullets.forEach((b, index) => {
-            if (b.dir === 'up') b.y -= b.speed;
-            if (b.dir === 'down') b.y += b.speed;
-            if (b.dir === 'left') b.x -= b.speed;
-            if (b.dir === 'right') b.x += b.speed;
-
-            // 打中牆壁
-            let r = Math.floor(b.y / SIZE);
-            let c = Math.floor(b.x / SIZE);
-            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
-                if (map[r][c] === 1) { map[r][c] = 0; tank.bullets.splice(index, 1); }
-                else if (map[r][c] === 2) { tank.bullets.splice(index, 1); }
-            }
-            if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) tank.bullets.splice(index, 1);
-            
-            // 玩家子彈打中敵人
-            if (tank === player) {
-                enemies.forEach((en, ei) => {
-                    if (b.x > en.x && b.x < en.x + SIZE && b.y > en.y && b.y < en.y + SIZE) {
-                        enemies.splice(ei, 1);
-                        tank.bullets.splice(index, 1);
-                        score += 100;
-                    }
-                });
+    enemies.forEach((en, i) => {
+        en.x += en.speed;
+        // 子彈打敵人
+        player.bullets.forEach((b, bi) => {
+            if (b.x > en.x && b.x < en.x + 30 && b.y > en.y && b.y < en.y + 50) {
+                enemies.splice(i, 1);
+                player.bullets.splice(bi, 1);
+                score += 100;
             }
         });
-    });
-
-    // 敵人 AI
-    enemies.forEach(en => {
-        en.moveTimer--;
-        if (en.moveTimer <= 0) {
-            const dirs = ['up', 'down', 'left', 'right'];
-            en.dir = dirs[Math.floor(Math.random() * 4)];
-            en.moveTimer = 30 + Math.random() * 60;
+        // 敵人撞玩家
+        if (en.x < player.x + 20 && en.x + 30 > player.x && en.y < player.y + 50 && en.y + 50 > player.y) {
+            if (player.inv <= 0) {
+                player.hp--;
+                player.inv = 60;
+                if (player.hp <= 0) { alert("GAME OVER"); location.reload(); }
+            }
         }
-        let ex = en.x, ey = en.y;
-        if (en.dir === 'up') ey -= en.speed;
-        if (en.dir === 'down') ey += en.speed;
-        if (en.dir === 'left') ex -= en.speed;
-        if (en.dir === 'right') ex += en.speed;
-
-        if (!checkCollision(ex, ey)) { en.x = ex; en.y = ey; }
-        else { en.moveTimer = 0; }
-
-        if (Math.random() < 0.02) fire(en);
     });
 
-    if (Math.random() < 0.01) spawnEnemy();
+    if (player.inv > 0) player.inv--;
     document.getElementById('score').innerText = score;
-    document.getElementById('enemy-count').innerText = enemies.length;
-}
-
-function drawTank(tank, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(tank.x, tank.y, SIZE, SIZE);
-    ctx.fillStyle = "#fff";
-    // 畫砲管
-    if (tank.dir === 'up') ctx.fillRect(tank.x + 15, tank.y - 5, 10, 15);
-    if (tank.dir === 'down') ctx.fillRect(tank.x + 15, tank.y + SIZE - 10, 10, 15);
-    if (tank.dir === 'left') ctx.fillRect(tank.x - 5, tank.y + 15, 15, 10);
-    if (tank.dir === 'right') ctx.fillRect(tank.x + SIZE - 10, tank.y + 15, 15, 10);
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(-cameraX, 0);
 
-    // 畫地圖
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            if (map[r][c] === 1) {
-                ctx.fillStyle = "#a52a2a"; // 磚牆
-                ctx.fillRect(c * SIZE + 2, r * SIZE + 2, SIZE - 4, SIZE - 4);
-                ctx.strokeStyle = "#eee"; ctx.strokeRect(c * SIZE + 5, r * SIZE + 5, 10, 5);
-            } else if (map[r][c] === 2) {
-                ctx.fillStyle = "#aaa"; // 鋼鐵
-                ctx.fillRect(c * SIZE, r * SIZE, SIZE, SIZE);
-                ctx.strokeStyle = "#fff"; ctx.strokeRect(c * SIZE + 10, r * SIZE + 10, 20, 20);
-            }
-        }
-    }
-
-    // 畫坦克
-    drawTank(player, "#ed810e");
-    enemies.forEach(en => drawTank(en, "#00aaff"));
+    // 畫平台
+    ctx.fillStyle = "#5c3c10";
+    platforms.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
 
     // 畫子彈
     ctx.fillStyle = "#fff";
-    [player, ...enemies].forEach(tank => {
-        tank.bullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 4));
-    });
+    player.bullets.forEach(b => ctx.beginPath() || ctx.arc(b.x, b.y, 4, 0, 7) || ctx.fill());
 
+    // 畫主角 (簡化火柴人)
+    if (player.inv % 10 < 5) {
+        ctx.fillStyle = "#0af";
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        // 槍管
+        ctx.fillStyle = "#fff";
+        let gx = player.dir === 1 ? 25 : -10;
+        ctx.fillRect(player.x + gx, player.y + 15, 15, 5);
+    }
+
+    // 畫敵人
+    ctx.fillStyle = "#f00";
+    enemies.forEach(en => ctx.fillRect(en.x, en.y, 30, 50));
+
+    ctx.restore();
     update();
     requestAnimationFrame(draw);
 }
-
 draw();
 </script>
 </body>
