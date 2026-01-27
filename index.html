@@ -142,45 +142,6 @@ const script = [
         text: "第一章結束。你的最終好感度決定了未來的發展..." 
     }
 ];
-const script = [
-    { 
-        bg: "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17?q=80&w=800", // 櫻花樹下
-        char: "", 
-        name: "學長", 
-        text: "那是開學後的第一個星期五..." 
-    },
-    { 
-        char: "https://i.imgur.com/8N4N8f8.png", // 假設這是一個高興的表情圖
-        name: "學妹 莉莉", 
-        text: "前輩！等等我～ 呼...呼... 終於追上你了。" 
-    },
-    { 
-        name: "學妹 莉莉", 
-        text: "那個...你有聽說最近新開的那家甜點店嗎？",
-        options: [
-            { text: "聽說過，要一起去嗎？", nextId: 3, love: 10 },
-            { text: "沒興趣，我要回家打飛機。", nextId: 4, love: -5 }
-        ]
-    },
-    // ID 3: 路線 A
-    { 
-        name: "學妹 莉莉", 
-        text: "真的嗎？！那這算是約會嗎？太好了！", 
-        char: "https://i.imgur.com/8N4N8f8.png", 
-        nextId: 5 
-    },
-    // ID 4: 路線 B
-    { 
-        name: "學妹 莉莉", 
-        text: "嗚...前輩真是個木頭... 那我找別人去了喔！", 
-        char: "https://i.imgur.com/6U8pGsm.png", // 假設這是一個難過的表情圖
-        nextId: 5
-    },
-    { 
-        name: "系統", 
-        text: "第一章結束。你的最終好感度決定了未來的發展..." 
-    }
-];
 let currentIndex = 0;
 let totalLove = 0;
 
