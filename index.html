@@ -2,71 +2,216 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>簡易戀愛養成遊戲</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的網頁戀愛遊戲</title>
     <style>
-        #game-container {
+        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        /* 遊戲主容器 */
+        #game-screen {
             width: 800px;
             height: 600px;
             position: relative;
-            border: 5px solid #333;
+            background-color: #ddd;
             background-size: cover;
-            overflow: hidden;
-            font-family: "Microsoft JhengHei", sans-serif;
+            background-position: center;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
-        #character {
+
+        /* 角色圖片層 */
+        #character-layer {
             position: absolute;
             bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            height: 80%;
-            transition: all 0.5s;
+            height: 90%;
+            transition: all 0.3s ease;
         }
-        #dialogue-box {
+
+        /* 對話框樣式 */
+        #ui-layer {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            height: 150px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .options-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            bottom: 10px;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
-            cursor: pointer;
-            background: #ff69b4;
+
+        #dialogue-box {
+            width: 90%;
+            height: 140px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffb6c1;
+            border-radius: 15px;
+            padding: 20px;
             color: white;
-            border: none;
-            border-radius: 5px;
+            cursor: pointer;
+            box-sizing: border-box;
         }
+
+        #name-tag { color: #ffb6c1; font-weight: bold; font-size: 1.2em; margin-bottom: 5px; }
+        #text-content { line-height: 1.6; font-size: 1.1em; }
+
+        /* 選項按鈕樣式 */
+        .options-overlay {
+            position: absolute;
+            top: 40%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .opt-btn {
+            width: 300px;
+            padding: 12px;
+            background: white;
+            border: 2px solid #ff69b4;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        .opt-btn:hover { background: #ffb6c1; color: white; transform: scale(1.05); }
     </style>
 </head>
 <body>
 
-<div id="game-container" style="background-image: url('classroom.jpg');">
-    <img id="character" src="heroine_happy.png" alt="角色">
-    <div id="dialogue-box" onclick="nextStep()">
-        <strong id="name-label">角色名字</strong>
-        <p id="text-content">點擊這裡開始故事...</p>
+<div id="game-screen">
+    <img id="character-layer" src="" style="display:none;">
+    
+    <div id="options-layer" class="options-overlay"></div>
+
+    <div id="ui-layer">
+        <div id="dialogue-box" onclick="handleNext()">
+            <div id="name-tag"></div>
+            <div id="text-content">點擊開始遊戲...</div>
+        </div>
     </div>
-    <div id="options" class="options-container" style="display:none;"></div>
 </div>
 
 <script>
-    // 這裡將放置遊戲邏輯
+/**
+ * 劇本數據
+ * bg: 背景圖片 URL
+ * char: 角色圖片 URL (留空則不顯示角色)
+ * name: 說話者名字
+ * text: 對話內容
+ * options: [ { text: "選項文字", nextId: 跳轉到的步數, love: 好感度增減 } ]
+ */
+const script = [
+    { 
+        bg: "https://images.unsplash.com/photo-1541410965313-d53b3c16ef17?q=80&w=800", // 櫻花樹下
+        char: "", 
+        name: "系統", 
+        text: "那是開學後的第一個星期五..." 
+    },
+    { 
+        char: "https://i.imgur.com/8N4N8f8.png", // 假設這是一個高興的表情圖
+        name: "學妹 莉莉", 
+        text: "前輩！等等我～ 呼...呼... 終於追上你了。" 
+    },
+    { 
+        name: "學妹 莉莉", 
+        text: "那個...你有聽說最近新開的那家甜點店嗎？",
+        options: [
+            { text: "聽說過，要一起去嗎？", nextId: 3, love: 10 },
+            { text: "沒興趣，我要回家打電動。", nextId: 4, love: -5 }
+        ]
+    },
+    // ID 3: 路線 A
+    { 
+        name: "學妹 莉莉", 
+        text: "真的嗎？！那這算是約會嗎？太好了！", 
+        char: "https://i.imgur.com/8N4N8f8.png", 
+        nextId: 5 
+    },
+    // ID 4: 路線 B
+    { 
+        name: "學妹 莉莉", 
+        text: "嗚...前輩真是個木頭... 那我找別人去了喔！", 
+        char: "https://i.imgur.com/6U8pGsm.png", // 假設這是一個難過的表情圖
+        nextId: 5
+    },
+    { 
+        name: "系統", 
+        text: "第一章結束。你的最終好感度決定了未來的發展..." 
+    }
+];
+
+let currentIndex = 0;
+let totalLove = 0;
+
+const nameTag = document.getElementById('name-tag');
+const textContent = document.getElementById('text-content');
+const charImg = document.getElementById('character-layer');
+const gameScreen = document.getElementById('game-screen');
+const optLayer = document.getElementById('options-layer');
+
+function updateStage() {
+    const data = script[currentIndex];
+
+    // 更新背景
+    if(data.bg) gameScreen.style.backgroundImage = `url('${data.bg}')`;
+
+    // 更新角色
+    if(data.char) {
+        charImg.src = data.char;
+        charImg.style.display = 'block';
+    } else if (data.char === "") {
+        charImg.style.display = 'none';
+    }
+
+    // 更新文字
+    nameTag.innerText = data.name;
+    textContent.innerText = data.text;
+
+    // 清除舊選項
+    optLayer.innerHTML = '';
+
+    // 檢查是否有選項
+    if(data.options) {
+        data.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => {
+                totalLove += opt.love;
+                currentIndex = opt.nextId;
+                updateStage();
+            };
+            optLayer.appendChild(btn);
+        });
+    }
+}
+
+function handleNext() {
+    // 如果目前這格有選項，則不允許點擊對話框跳過
+    if(script[currentIndex].options) return;
+
+    // 如果指定了 nextId 則跳轉，否則順序執行
+    if(script[currentIndex].nextId !== undefined) {
+        currentIndex = script[currentIndex].nextId;
+    } else {
+        currentIndex++;
+    }
+
+    if(currentIndex < script.length) {
+        updateStage();
+    } else {
+        nameTag.innerText = "Game Over";
+        textContent.innerText = `感謝遊玩！最終好感度：${totalLove}`;
+        charImg.style.display = 'none';
+    }
+}
+
+// 初始化啟動
+updateStage();
 </script>
+
 </body>
 </html>
